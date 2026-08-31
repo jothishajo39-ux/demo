@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CleanSpot — Full Project Demo</title>
+<style>
+  :root {
+    --teal: #028090;
+    --seafoam: #00A896;
+    --mint: #02C39A;
+    --dark: #0B2E33;
+    --offwhite: #F4FAF9;
+    --text-dark: #12302E;
+    --muted: #5C7A78;
+    --danger: #B0453E;
+    --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    background: var(--offwhite);
+    color: var(--text-dark);
+    max-width: 430px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding-bottom: 2rem;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    background: var(--dark);
+    color: var(--white);
+    padding: 1rem 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 20;
+  }
+  .logo { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 0.95rem; }
+  .logo-dot { width: 26px; height: 26px; border-radius: 50%; background: var(--mint); display:flex; align-items:center; justify-content:center; font-size:13px; }
+  .net-toggle {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.72rem;
+    background: rgba(255,255,255,0.1);
+    padding: 0.32rem 0.6rem;
+    border-radius: 999px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .net-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); }
+  .net-toggle.offline .net-dot { background: var(--danger); }
+
+  /* ---------- Feature label strip ---------- */
+  .feature-strip {
+    background: #E4F4F2;
+    color: var(--teal);
+    font-size: 0.68rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.35rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .banner { padding: 0.55rem 1.1rem; font-size: 0.74rem; text-align: center; display: none; }
+  .banner.show { display: block; }
+  .banner.cached { background: #FCF1D8; color: #8A6416; }
+  .banner.empty { background: #FBE7E5; color: var(--danger); }
+
+  /* ---------- 1. Live Map / location picker ---------- */
+  .location-picker { padding: 1rem 1.1rem 0.3rem; }
+  .location-picker label { font-size: 0.72rem; color: var(--muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+  select {
+    width: 100%; margin-top: 0.4rem; padding: 0.6rem 0.7rem;
+    border-radius: 10px; border: 1px solid #D7E6E4; background: var(--white);
+    font-size: 0.88rem; color: var(--text-dark);
+  }
+  .map-preview {
+    margin: 0.7rem 1.1rem 0;
+    height: 90px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #D7ECE9, #C3E4DF);
+    position: relative;
+    overflow: hidden;
+  }
+  .map-preview .pin {
+    position: absolute; font-size: 1.1rem;
+  }
+
+  /* ---------- 4. Filters ---------- */
+  .filters { display: flex; gap: 0.5rem; padding: 0.9rem 1.1rem 0.2rem; overflow-x: auto; }
+  .chip {
+    border: 1px solid #D7E6E4; background: var(--white); color: var(--muted);
+    padding: 0.4rem 0.85rem; border-radius: 999px; font-size: 0.76rem;
+    cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  }
+  .chip.active { background: var(--teal); color: var(--white); border-color: var(--teal); }
+
+  /* ---------- Section ---------- */
+  .section { padding: 0.9rem 1.1rem; }
+  .section-title { font-size: 0.9rem; font-weight: bold; margin-bottom: 0.6rem; }
+
+  /* ---------- 2/3/5. Cards: ratings + status + trust score ---------- */
+  .card { background: var(--white); border-radius: 12px; padding: 0.85rem; margin-bottom: 0.65rem; box-shadow: 0 3px 10px rgba(0,0,0,0.05); }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.25rem; }
+  .card h3 { font-size: 0.92rem; }
+  .status { font-size: 0.65rem; font-weight: bold; padding: 0.18rem 0.5rem; border-radius: 999px; text-transform: uppercase; flex-shrink: 0; }
+  .status.working { background: #DDF3EC; color: #0F6E56; }
+  .status.locked { background: #FBE7E5; color: var(--danger); }
+  .status.maintenance { background: #FCF1D8; color: #8A6416; }
+  .stars { color: #F0A93C; font-size: 0.82rem; }
+  .stars .count { color: var(--muted); font-size: 0.72rem; margin-left: 3px; }
+  .distance { font-size: 0.74rem; color: var(--muted); margin-top: 0.15rem; }
+  .tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.4rem; }
+  .tag { font-size: 0.66rem; background: var(--offwhite); color: var(--teal); border: 1px solid #D7E6E4; padding: 0.15rem 0.45rem; border-radius: 6px; }
+  .trust-row { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.45rem; font-size: 0.72rem; color: var(--muted); }
+  .trust-bar-bg { flex: 1; height: 5px; background: #E5EFED; border-radius: 4px; overflow: hidden; }
+  .trust-bar-fill { height: 100%; background: var(--mint); }
+  .card-actions { display: flex; gap: 0.4rem; margin-top: 0.55rem; }
+  .btn-outline { flex: 1; background: transparent; border: 1px solid var(--teal); color: var(--teal); padding: 0.4rem; border-radius: 8px; font-size: 0.74rem; cursor: pointer; font-weight: bold; }
+
+  /* ---------- Empty state (offline) ---------- */
+  .empty-state { text-align: center; padding: 2rem 1rem; color: var(--muted); }
+  .empty-state .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .empty-state h3 { color: var(--text-dark); font-size: 0.95rem; margin-bottom: 0.3rem; }
+  .empty-state p { font-size: 0.78rem; line-height: 1.4; }
+
+  /* ---------- 6. Add location ---------- */
+  .add-location-btn {
+    margin: 0.3rem 1.1rem 1rem;
+    width: calc(100% - 2.2rem);
+    background: var(--mint);
+    color: var(--dark);
+    border: none;
+    padding: 0.7rem;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  /* ---------- Modal (rate + add) ---------- */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(11,46,51,0.55); align-items: center; justify-content: center; z-index: 50; padding: 1rem; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--white); border-radius: 14px; padding: 1.3rem; max-width: 360px; width: 100%; }
+  .modal h3 { margin-bottom: 0.25rem; font-size: 1rem; }
+  .modal .sub { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.9rem; }
+  .star-picker { font-size: 1.6rem; color: #DDD; cursor: pointer; margin-bottom: 0.9rem; }
+  .star-picker span.active { color: #F0A93C; }
+  .modal input, .modal textarea {
+    width: 100%; border: 1px solid #D7E6E4; border-radius: 8px;
+    padding: 0.55rem; font-size: 0.82rem; resize: none; font-family: inherit; margin-bottom: 0.8rem;
+  }
+  .modal textarea { min-height: 60px; }
+  .modal-actions { display: flex; gap: 0.5rem; }
+  .btn-ghost { flex: 1; background: var(--offwhite); border: none; color: var(--muted); padding: 0.55rem; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.82rem; }
+  .btn-primary { flex: 1; background: var(--mint); color: var(--dark); border: none; padding: 0.55rem; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.82rem; }
+
+  .explain {
+    margin: 0.9rem 1.1rem 0;
+    background: var(--dark);
+    color: #BFE3E0;
+    border-radius: 12px;
+    padding: 0.9rem;
+    font-size: 0.74rem;
+    line-height: 1.5;
+  }
+  .explain b { color: var(--mint); }
+
+  .feature-legend {
+    margin: 0.9rem 1.1rem 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+  }
+  .feature-legend .item {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.68rem;
+    color: var(--muted);
+    border: 1px solid #E5EFED;
+  }
+  .feature-legend .item b { color: var(--teal); display: block; font-size: 0.72rem; margin-bottom: 0.1rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><div class="logo-dot">💧</div> CleanSpot</div>
+  <div class="net-toggle" id="netToggle" onclick="toggleNet()">
+    <div class="net-dot"></div>
+    <span id="netLabel">Online</span>
+  </div>
+</header>
+
+<div class="banner cached" id="bannerCached">📦 Offline — showing cached data from your last visit here</div>
+<div class="banner empty" id="bannerEmpty">🚫 Offline — this area was never cached, no data to show</div>
+
+<!-- Feature 1: Live Map View -->
+<div class="location-picker">
+  <label>📍 Your location (simulate)</label>
+  <select id="locationSelect" onchange="render()">
+    <option value="visited1">Nagercoil Bus Stand (visited before)</option>
+    <option value="visited2">Railway Station Area (visited before)</option>
+    <option value="new1">Vadasery Market (never visited)</option>
+    <option value="new2">College Road (never visited)</option>
+  </select>
+</div>
+<div class="map-preview">
+  <div class="pin" style="top:30%; left:40%;">📍</div>
+  <div class="pin" style="top:55%; left:65%;">🚻</div>
+  <div class="pin" style="top:20%; left:70%;">💧</div>
+</div>
+
+<!-- Feature 4: Smart Filters -->
+<div class="filters">
+  <div class="chip active" data-filter="all">All</div>
+  <div class="chip" data-filter="toilet">Toilets</div>
+  <div class="chip" data-filter="water">Water ATMs</div>
+  <div class="chip" data-filter="women">Women-friendly</div>
+  <div class="chip" data-filter="free">Free</div>
+</div>
+
+<div class="section">
+  <div class="section-title">Nearby results</div>
+  <div id="resultsArea"></div>
+</div>
+
+<!-- Feature 6: Add Location -->
+<button class="add-location-btn" onclick="openAddModal()">➕ Add a new location</button>
+
+<div class="feature-legend">
+  <div class="item"><b>⭐ Crowd Ratings</b>Tap "Rate" on any card</div>
+  <div class="item"><b>🛡️ Trust Score</b>Bar shown on each card</div>
+  <div class="item"><b>🔄 Real-Time Status</b>Working / Locked tags</div>
+  <div class="item"><b>📡 Offline Mode</b>Toggle top-right</div>
+</div>
+
+<div class="explain">
+  <b>How to explore:</b> Use the filter chips to narrow results. Tap <b>Rate</b> to submit a rating. Tap <b>Add a new location</b> to see how new entries get added. Then toggle <b>Offline</b> and switch locations — visited areas still show cached data, new areas show nothing, just like a real offline-first app.
+</div>
+
+<!-- Rate Modal -->
+<div class="modal-overlay" id="rateModal">
+  <div class="modal">
+    <h3 id="rateModalTitle">Rate this location</h3>
+    <div class="sub">Your rating updates the trust score for everyone.</div>
+    <div class="star-picker" id="starPicker">
+      <span data-val="1">★</span><span data-val="2">★</span><span data-val="3">★</span><span data-val="4">★</span><span data-val="5">★</span>
+    </div>
+    <textarea placeholder="Optional comment — e.g. 'Clean, well-lit'"></textarea>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('rateModal')">Cancel</button>
+      <button class="btn-primary" onclick="submitRating()">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Location Modal -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <h3>Add a new location</h3>
+    <div class="sub">Help others by adding a spot that's missing from the map.</div>
+    <input type="text" placeholder="Location name (e.g. Market Road Toilet)" id="newLocName" />
+    <input type="text" placeholder="Type: toilet or water ATM" id="newLocType" />
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('addModal')">Cancel</button>
+      <button class="btn-primary" onclick="submitNewLocation()">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const data = {
+  visited1: [
+    { name: "Bus Stand Public Toilet", type: "toilet", distance: "180 m", rating: 4.2, reviews: 58, status: "working", tags: ["Women-friendly", "Free"], trust: 88 },
+    { name: "Bus Stand Water ATM", type: "water", distance: "220 m", rating: 4.0, reviews: 34, status: "working", tags: ["Paid"], trust: 79 }
+  ],
+  visited2: [
+    { name: "Railway Station Toilet", type: "toilet", distance: "90 m", rating: 3.5, reviews: 22, status: "locked", tags: ["Free"], trust: 64 },
+    { name: "Platform Water ATM", type: "water", distance: "150 m", rating: 4.6, reviews: 90, status: "working", tags: ["Women-friendly", "Free"], trust: 94 }
+  ],
+  new1: [],
+  new2: []
+};
+
+let isOnline = true;
+let currentFilter = "all";
+
+function toggleNet() {
+  isOnline = !isOnline;
+  document.getElementById("netToggle").classList.toggle("offline", !isOnline);
+  document.getElementById("netLabel").textContent = isOnline ? "Online" : "Offline";
+  render();
+}
+
+function starString(r) {
+  const full = Math.round(r);
+  return "★".repeat(full) + "☆".repeat(5 - full);
+}
+function statusLabel(s) { return s === "working" ? "Working" : s === "locked" ? "Locked" : "Maintenance"; }
+
+function matchesFilter(loc, f) {
+  if (f === "all") return true;
+  if (f === "toilet") return loc.type === "toilet";
+  if (f === "water") return loc.type === "water";
+  if (f === "women") return loc.tags.includes("Women-friendly");
+  if (f === "free") return loc.tags.includes("Free");
+  return true;
+}
+
+function render() {
+  const loc = document.getElementById("locationSelect").value;
+  const bannerCached = document.getElementById("bannerCached");
+  const bannerEmpty = document.getElementById("bannerEmpty");
+  bannerCached.classList.remove("show");
+  bannerEmpty.classList.remove("show");
+
+  const isVisitedArea = loc.startsWith("visited");
+  let list = data[loc];
+
+  if (isOnline) {
+    if (!list.length) {
+      // simulate freshly fetched data for a "new" area when online
+      list = [
+        { name: "Nearby Toilet A", type: "toilet", distance: "310 m", rating: 3.9, reviews: 12, status: "working", tags: ["Free"], trust: 71 },
+        { name: "Nearby Water ATM", type: "water", distance: "410 m", rating: 4.1, reviews: 19, status: "working", tags: ["Wheelchair accessible"], trust: 80 }
+      ];
+    }
+    renderCards(list.filter(l => matchesFilter(l, currentFilter)));
+  } else {
+    if (isVisitedArea) {
+      bannerCached.classList.add("show");
+      renderCards(list.filter(l => matchesFilter(l, currentFilter)));
+    } else {
+      bannerEmpty.classList.add("show");
+      renderEmpty();
+    }
+  }
+}
+
+function renderCards(list) {
+  const results = document.getElementById("resultsArea");
+  if (!list.length) {
+    results.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>No results match this filter.</p></div>`;
+    return;
+  }
+  results.innerHTML = list.map(loc => `
+    <div class="card">
+      <div class="card-top">
+        <h3>${loc.name}</h3>
+        <div class="status ${loc.status}">${statusLabel(loc.status)}</div>
+      </div>
+      <div class="stars">${starString(loc.rating)} <span class="count">${loc.rating.toFixed(1)} (${loc.reviews})</span></div>
+      <div class="distance">${loc.distance} away</div>
+      <div class="tags">${loc.tags.map(t => `<span class="tag">${t}</span>`).join("")}</div>
+      <div class="trust-row">Trust <div class="trust-bar-bg"><div class="trust-bar-fill" style="width:${loc.trust}%"></div></div>${loc.trust}%</div>
+      <div class="card-actions">
+        <button class="btn-outline" onclick="openRateModal('${loc.name.replace(/'/g, "\\'")}')">Rate</button>
+        <button class="btn-outline" onclick="alert('Sample UI — would open directions.')">Directions</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderEmpty() {
+  document.getElementById("resultsArea").innerHTML = `
+    <div class="empty-state">
+      <div class="icon">📡</div>
+      <h3>No data available</h3>
+      <p>This area hasn't been loaded before.<br>Connect to the internet to fetch nearby locations.</p>
+    </div>
+  `;
+}
+
+document.querySelectorAll(".chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    currentFilter = chip.dataset.filter;
+    render();
+  });
+});
+
+let selectedStars = 0;
+document.querySelectorAll("#starPicker span").forEach(star => {
+  star.addEventListener("click", () => {
+    selectedStars = parseInt(star.dataset.val);
+    document.querySelectorAll("#starPicker span").forEach(s => s.classList.toggle("active", parseInt(s.dataset.val) <= selectedStars));
+  });
+});
+
+function openRateModal(name) {
+  document.getElementById("rateModalTitle").textContent = "Rate: " + name;
+  document.getElementById("rateModal").classList.add("open");
+}
+function openAddModal() { document.getElementById("addModal").classList.add("open"); }
+function closeModal(id) {
+  document.getElementById(id).classList.remove("open");
+  if (id === "rateModal") {
+    selectedStars = 0;
+    document.querySelectorAll("#starPicker span").forEach(s => s.classList.remove("active"));
+  }
+}
+function submitRating() {
+  if (selectedStars === 0) { alert("Please select a star rating first."); return; }
+  alert("Thanks! Your " + selectedStars + "-star rating was recorded (sample UI, not saved).");
+  closeModal("rateModal");
+}
+function submitNewLocation() {
+  const name = document.getElementById("newLocName").value.trim();
+  if (!name) { alert("Please enter a location name."); return; }
+  alert("'" + name + "' would be added to the map (sample UI, not saved).");
+  closeModal("addModal");
+  document.getElementById("newLocName").value = "";
+  document.getElementById("newLocType").value = "";
+}
+
+render();
+</script>
+
+</body>
+</html>
